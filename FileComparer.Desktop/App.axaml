@@ -1,0 +1,30 @@
+<Application
+    x:Class="FileComparer.Desktop.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    RequestedThemeVariant="Default">
+  <Application.Styles>
+    <FluentTheme />
+    <Style Selector="Window">
+      <Setter Property="FontFamily" Value="Inter" />
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#2563EB" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="18,10" />
+    </Style>
+    <Style Selector="Button.danger">
+      <Setter Property="Background" Value="#B42318" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="#FAFAFA" />
+      <Setter Property="BorderBrush" Value="#D0D5DD" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="18" />
+    </Style>
+  </Application.Styles>
+</Application>

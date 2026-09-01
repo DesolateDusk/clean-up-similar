@@ -1,0 +1,324 @@
+<Window
+    x:Class="FileComparer.Desktop.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:domain="using:FileComparer.Domain.Models"
+    xmlns:vm="using:FileComparer.Desktop.ViewModels"
+    Title="相似檔案整理工具"
+    Width="1240"
+    Height="800"
+    MinWidth="980"
+    MinHeight="650"
+    Background="#F2F4F7"
+    WindowStartupLocation="CenterScreen">
+  <Grid RowDefinitions="Auto,*">
+    <Border Background="#101828" Padding="28,20">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="3">
+          <TextBlock
+              Text="相似檔案整理工具"
+              Foreground="White"
+              FontSize="24"
+              FontWeight="Bold" />
+          <TextBlock
+              Text="先比對、再確認；刪除項目只會移至 Windows 資源回收筒。"
+              Foreground="#D0D5DD" />
+        </StackPanel>
+        <TextBlock
+            Grid.Column="1"
+            VerticalAlignment="Center"
+            Foreground="#84ADFF"
+            FontWeight="SemiBold"
+            Text="V1 · 本機處理" />
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1">
+      <ScrollViewer IsVisible="{Binding IsStartVisible}">
+        <StackPanel
+            Width="760"
+            Margin="28"
+            HorizontalAlignment="Center"
+            Spacing="18">
+          <StackPanel Spacing="4">
+            <TextBlock
+                Text="開始新的掃描"
+                FontSize="28"
+                FontWeight="Bold"
+                Foreground="#101828" />
+            <TextBlock
+                Text="選擇資料夾與比對模式。所有影像分析與雜湊都在此電腦完成。"
+                Foreground="#475467" />
+          </StackPanel>
+
+          <Border Classes="card">
+            <StackPanel Spacing="10">
+              <TextBlock Text="掃描資料夾" FontWeight="SemiBold" />
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBox
+                    Text="{Binding RootDirectory, Mode=TwoWay}"
+                    PlaceholderText="請選擇資料夾"
+                    IsReadOnly="True" />
+                <Button
+                    Grid.Column="1"
+                    Margin="10,0,0,0"
+                    Padding="16,8"
+                    Content="瀏覽…"
+                    Click="BrowseFolder_OnClick" />
+              </Grid>
+              <CheckBox
+                  Content="包含子資料夾"
+                  IsChecked="{Binding IncludeSubdirectories, Mode=TwoWay}" />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card">
+            <StackPanel Spacing="12">
+              <TextBlock Text="比對模式" FontWeight="SemiBold" />
+              <RadioButton
+                  GroupName="CompareMode"
+                  IsChecked="{Binding IsExactMode, Mode=TwoWay}"
+                  Content="檔案比對（完全相同／SHA-256）" />
+              <RadioButton
+                  GroupName="CompareMode"
+                  IsChecked="{Binding IsMediaMode, Mode=TwoWay}"
+                  Content="圖片／影片比對（內容相似）" />
+              <CheckBox
+                  Content="忽略既有快取並重新計算"
+                  IsChecked="{Binding ForceRefresh, Mode=TwoWay}" />
+            </StackPanel>
+          </Border>
+
+          <TextBlock
+              Text="{Binding StatusMessage}"
+              Foreground="#475467"
+              TextWrapping="Wrap" />
+          <Button
+              Classes="primary"
+              HorizontalAlignment="Right"
+              Command="{Binding StartCommand}"
+              Content="開始掃描" />
+        </StackPanel>
+      </ScrollViewer>
+
+      <Border
+          IsVisible="{Binding IsProgressVisible}"
+          Classes="card"
+          Width="620"
+          Margin="28"
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center">
+        <StackPanel Spacing="18">
+          <TextBlock
+              Text="正在分析檔案"
+              FontSize="26"
+              FontWeight="Bold" />
+          <TextBlock
+              Text="{Binding StageText}"
+              FontSize="17"
+              Foreground="#175CD3"
+              FontWeight="SemiBold" />
+          <ProgressBar
+              Minimum="0"
+              Maximum="100"
+              Height="12"
+              Value="{Binding ProgressPercentage}" />
+          <Grid ColumnDefinitions="*,*,*">
+            <StackPanel>
+              <TextBlock Text="已發現" Foreground="#667085" />
+              <TextBlock Text="{Binding DiscoveredCount}" FontSize="22" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+              <TextBlock Text="已處理" Foreground="#667085" />
+              <TextBlock Text="{Binding ProcessedCount}" FontSize="22" FontWeight="Bold" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+              <TextBlock Text="進度 %" Foreground="#667085" />
+              <TextBlock Text="{Binding ProgressPercentage}" FontSize="22" FontWeight="Bold" />
+            </StackPanel>
+          </Grid>
+          <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+          <Button
+              HorizontalAlignment="Right"
+              Command="{Binding CancelCommand}"
+              Content="取消" />
+        </StackPanel>
+      </Border>
+
+      <Grid
+          IsVisible="{Binding IsResultsVisible}"
+          Margin="18"
+          RowDefinitions="Auto,*,Auto,Auto">
+        <Border Classes="card" Padding="14" Margin="0,0,0,12">
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <Button Content="重新設定" Click="ReturnToStart_OnClick" />
+            <TextBlock
+                Grid.Column="1"
+                Margin="14,0"
+                VerticalAlignment="Center"
+                Text="{Binding StatusMessage}"
+                TextWrapping="Wrap" />
+            <Button
+                Grid.Column="2"
+                Margin="0,0,8,0"
+                Command="{Binding SelectSuggestedCommand}"
+                Content="選取非保留項" />
+            <Button
+                Grid.Column="3"
+                Command="{Binding ClearSelectionCommand}"
+                Content="清除選取" />
+          </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" ColumnDefinitions="260,*,350">
+          <Border Classes="card" Padding="8" Margin="0,0,12,0">
+            <Grid RowDefinitions="Auto,*">
+              <TextBlock
+                  Margin="8"
+                  Text="比對群組"
+                  FontSize="18"
+                  FontWeight="Bold" />
+              <ListBox
+                  Grid.Row="1"
+                  ItemsSource="{Binding Groups}"
+                  SelectedItem="{Binding SelectedGroup, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ResultGroupViewModel">
+                    <StackPanel Margin="4" Spacing="3">
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding Subtitle}" FontSize="12" Foreground="#667085" />
+                    </StackPanel>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Grid>
+          </Border>
+
+          <Border Grid.Column="1" Classes="card" Padding="8" Margin="0,0,12,0">
+            <Grid RowDefinitions="Auto,*">
+              <TextBlock
+                  Margin="8"
+                  Text="群組內容"
+                  FontSize="18"
+                  FontWeight="Bold" />
+              <ListBox
+                  x:Name="ResultItemsList"
+                  Grid.Row="1"
+                  ItemsSource="{Binding SelectedGroup.Items}"
+                  SelectionChanged="ResultItemsList_OnSelectionChanged">
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ResultItemViewModel">
+                    <Grid Margin="2,6" ColumnDefinitions="Auto,*,Auto">
+                      <CheckBox
+                          Margin="4,0,10,0"
+                          VerticalAlignment="Center"
+                          IsEnabled="{Binding CanSelectForDelete}"
+                          IsChecked="{Binding IsSelectedForDelete, Mode=TwoWay}" />
+                      <StackPanel Grid.Column="1" Spacing="3">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                          <Border
+                              IsVisible="{Binding IsSuggestedKeep}"
+                              Background="#D1FADF"
+                              CornerRadius="4"
+                              Padding="6,2">
+                            <TextBlock Text="建議保留" FontSize="11" Foreground="#027A48" />
+                          </Border>
+                        </StackPanel>
+                        <TextBlock
+                            Text="{Binding FullPath}"
+                            FontSize="11"
+                            Foreground="#667085"
+                            TextTrimming="CharacterEllipsis" />
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                          <TextBlock Text="{Binding SizeText}" FontSize="12" />
+                          <TextBlock Text="{Binding DimensionsText}" FontSize="12" />
+                          <TextBlock Text="{Binding DurationText}" FontSize="12" />
+                          <TextBlock Text="{Binding CodecText}" FontSize="12" />
+                          <TextBlock Text="相似度" FontSize="12" Foreground="#667085" />
+                          <TextBlock Text="{Binding SimilarityText}" FontSize="12" />
+                          <TextBlock Text="差異" FontSize="12" Foreground="#667085" />
+                          <TextBlock Text="{Binding DistanceText}" FontSize="12" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding StatusText}" FontSize="11" Foreground="#B54708" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="2" Margin="10,0,0,0" Spacing="5">
+                        <Button
+                            Tag="{Binding}"
+                            Content="開啟"
+                            Click="OpenFile_OnClick" />
+                        <Button
+                            Tag="{Binding}"
+                            Content="資料夾"
+                            Click="OpenFolder_OnClick" />
+                      </StackPanel>
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Grid>
+          </Border>
+
+          <Border Grid.Column="2" Classes="card">
+            <Grid RowDefinitions="Auto,*,Auto,Auto">
+              <TextBlock Text="媒體預覽" FontSize="18" FontWeight="Bold" />
+              <Border Grid.Row="1" Margin="0,12" Background="#101828" CornerRadius="8">
+                <Image
+                    x:Name="PreviewImage"
+                    Margin="8"
+                    Stretch="Uniform" />
+              </Border>
+              <TextBlock
+                  Grid.Row="2"
+                  Text="{Binding PreviewStatusMessage}"
+                  Foreground="#667085"
+                  TextWrapping="Wrap" />
+              <StackPanel Grid.Row="3" Margin="0,10,0,0" Spacing="3">
+                <TextBlock Text="{Binding SelectedItem.Name}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding SelectedItem.ModifiedText}" FontSize="12" />
+                <TextBlock Text="{Binding SelectedItem.FullPath}" FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </Grid>
+          </Border>
+        </Grid>
+
+        <Expander Grid.Row="2" Margin="0,12,0,0" Header="掃描問題摘要">
+          <Border Classes="card" Padding="10">
+            <StackPanel Spacing="8">
+              <TextBlock Text="{Binding IssueSummaryText}" />
+              <ItemsControl ItemsSource="{Binding Issues}" MaxHeight="150">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="domain:ScanIssue">
+                    <TextBlock Text="{Binding Message}" FontSize="12" TextWrapping="Wrap" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </Expander>
+
+        <Border Grid.Row="3" Classes="card" Padding="14" Margin="0,12,0,0">
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBlock
+                VerticalAlignment="Center"
+                Text="{Binding SelectionSummaryText}"
+                FontWeight="SemiBold" />
+            <Button
+                Grid.Column="1"
+                Margin="8,0"
+                Command="{Binding CancelCommand}"
+                IsVisible="{Binding IsOperationActive}"
+                Content="取消作業" />
+            <Button
+                Grid.Column="2"
+                Classes="danger"
+                IsEnabled="{Binding HasDeleteSelection}"
+                Content="移至資源回收筒…"
+                Click="DeleteSelected_OnClick" />
+          </Grid>
+        </Border>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>

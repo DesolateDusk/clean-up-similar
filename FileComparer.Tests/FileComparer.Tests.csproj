@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>FileComparer.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileComparer.Domain\FileComparer.Domain.csproj" />
+    <ProjectReference Include="..\FileComparer.Application\FileComparer.Application.csproj" />
+    <ProjectReference Include="..\FileComparer.Infrastructure\FileComparer.Infrastructure.csproj" />
+    <ProjectReference Include="..\FileComparer.Desktop\FileComparer.Desktop.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4" />
+    <PackageReference Include="OpenCvSharp4.runtime.win" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+</Project>
