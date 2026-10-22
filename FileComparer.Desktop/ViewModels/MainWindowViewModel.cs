@@ -307,6 +307,7 @@ public sealed class MainWindowViewModel : ObservableObject, IDisposable
         previewCancellation?.Cancel();
         previewCancellation?.Dispose();
         previewCancellation = new CancellationTokenSource();
+        var requestCancellation = previewCancellation;
         PreviewPng = null;
 
         if (item is null ||
@@ -326,8 +327,9 @@ public sealed class MainWindowViewModel : ObservableObject, IDisposable
                 item.FullPath,
                 maxWidth: 720,
                 maxHeight: 520,
-                previewCancellation.Token);
-            if (!ReferenceEquals(item, SelectedItem))
+                requestCancellation.Token);
+            if (!ReferenceEquals(item, SelectedItem) ||
+                !ReferenceEquals(requestCancellation, previewCancellation))
             {
                 return;
             }
@@ -393,17 +395,20 @@ public sealed class MainWindowViewModel : ObservableObject, IDisposable
 
     public void SelectSuggestedDeletes()
     {
+        var protectedPaths = Groups
+            .Select(group => FindProtectedItem(group.Items)?.FullPath)
+            .OfType<string>()
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         suppressDeleteSelectionNotification = true;
         try
         {
             foreach (var group in Groups)
             {
-                var protectedItem = FindProtectedItem(group.Items);
                 foreach (var item in group.Items)
                 {
                     item.IsSelectedForDelete =
                         item.CanSelectForDelete &&
-                        !ReferenceEquals(item, protectedItem);
+                        !protectedPaths.Contains(item.FullPath);
                 }
             }
         }

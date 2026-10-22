@@ -1,0 +1,27 @@
+name: Verify Windows desktop
+
+on:
+  push:
+    branches:
+      - 'review/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.303
+      - name: Restore
+        run: dotnet restore FileComparer.sln
+      - name: Build
+        run: dotnet build FileComparer.sln --configuration Release --no-restore
+      - name: Run tests with Windows OpenCV native runtime
+        run: dotnet run --project FileComparer.Tests/FileComparer.Tests.csproj --configuration Release --no-build --no-restore

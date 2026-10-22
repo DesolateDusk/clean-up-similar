@@ -2,7 +2,7 @@
     x:Class="FileComparer.Desktop.App"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    RequestedThemeVariant="Default">
+    RequestedThemeVariant="Light">
   <Application.Styles>
     <FluentTheme />
     <Style Selector="Window">
@@ -13,15 +13,18 @@
       <Setter Property="Foreground" Value="White" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Padding" Value="18,10" />
+      <Setter Property="CornerRadius" Value="8" />
     </Style>
     <Style Selector="Button.danger">
       <Setter Property="Background" Value="#B42318" />
       <Setter Property="Foreground" Value="White" />
       <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="16,9" />
+      <Setter Property="CornerRadius" Value="8" />
     </Style>
     <Style Selector="Border.card">
-      <Setter Property="Background" Value="#FAFAFA" />
-      <Setter Property="BorderBrush" Value="#D0D5DD" />
+      <Setter Property="Background" Value="#FFFFFF" />
+      <Setter Property="BorderBrush" Value="#E4E7EC" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="10" />
       <Setter Property="Padding" Value="18" />

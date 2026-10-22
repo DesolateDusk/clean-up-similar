@@ -98,6 +98,33 @@ public sealed class FileHashServiceTests
     }
 
     [Fact]
+    public async Task RejectsCachedHashWhenFileChangedAfterEnumeration()
+    {
+        using var temp = new TemporaryDirectory();
+        var path = temp.GetPath("cached.bin");
+        await File.WriteAllTextAsync(path, "old", TestContext.Current.CancellationToken);
+        var entry = Entry(path);
+        var cache = new StubCacheRepository();
+        cache.Add(FileCacheRecord.Create(entry, DateTime.UnixEpoch) with
+        {
+            QuickHash = "STALE"
+        });
+        await File.WriteAllTextAsync(
+            path,
+            "different length",
+            TestContext.Current.CancellationToken);
+
+        var result = await CreateService(cache).GetQuickHashAsync(
+            entry,
+            forceRefresh: false,
+            TestContext.Current.CancellationToken);
+
+        Assert.Null(result.Value);
+        Assert.Equal(ScanIssueCategory.ChangedDuringScan, Assert.Single(result.Issues).Category);
+        Assert.Equal(0, cache.UpsertCalls);
+    }
+
+    [Fact]
     public async Task CacheFailureAddsIssueAndFallsBackToComputation()
     {
         using var temp = new TemporaryDirectory();

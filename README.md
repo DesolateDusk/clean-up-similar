@@ -32,7 +32,7 @@ FileComparer.Tests/           單元、整合、效能守門與原生相容性�
 
 ## 開發與測試
 
-需求：Windows x64 與由 [global.json](global.json) 固定的 .NET SDK 10。套件來源設定在 [NuGet.config](NuGet.config)。
+需求：Windows x64 與由 [global.json](global.json) 固定的 .NET SDK 10。套件從標準 NuGet 來源還原。
 
 ```powershell
 dotnet restore FileComparer.sln

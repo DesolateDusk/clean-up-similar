@@ -78,6 +78,13 @@ public sealed class FileHashService(
                     : cached?.Sha256;
                 if (cachedValue is not null)
                 {
+                    var cachedIdentityIssue = ValidateIdentity(entry);
+                    if (cachedIdentityIssue is not null)
+                    {
+                        issues.Add(cachedIdentityIssue);
+                        return new ProcessingResult<string>(null, issues);
+                    }
+
                     return ProcessingResult.Success(cachedValue);
                 }
             }
@@ -275,6 +282,7 @@ public sealed class FileHashService(
             }
 
             return info.Length == entry.Size &&
+                   (info.Attributes & FileAttributes.ReparsePoint) == 0 &&
                    info.LastWriteTimeUtc.Ticks ==
                    entry.LastWriteTimeUtc.Ticks
                 ? null
