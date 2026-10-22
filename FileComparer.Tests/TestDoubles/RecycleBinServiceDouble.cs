@@ -12,9 +12,10 @@ internal sealed class StubRecycleBinService(
     public IReadOnlyList<string> Paths => paths;
 
     public Task<DeleteOutcome> RecycleAsync(
-        string path,
+        FileEntry entry,
         CancellationToken cancellationToken)
     {
+        var path = entry.FullPath;
         paths.Add(path);
         return handler(path, cancellationToken);
     }

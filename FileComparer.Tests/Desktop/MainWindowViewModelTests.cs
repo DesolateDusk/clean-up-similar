@@ -148,6 +148,36 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SuggestedSelectionPreservesKeepItemsAcrossOverlappingGroups()
+    {
+        var a = Item("a.bin");
+        var b = Item("b.bin");
+        var c = Item("c.bin");
+        using var viewModel = CreateViewModel(
+            new StubScanApplicationService((_, _, _) =>
+                Task.FromResult(new ScanResult(
+                    ScanStatus.Completed,
+                    [
+                        Group(a with { IsSuggestedKeep = true }, b),
+                        Group(b with { IsSuggestedKeep = true }, c)
+                    ],
+                    [],
+                    3,
+                    3))));
+        viewModel.RootDirectory = "C:\\scan";
+        await viewModel.StartAsync();
+
+        viewModel.SelectSuggestedDeletes();
+
+        Assert.DoesNotContain(
+            viewModel.Groups.SelectMany(group => group.Items),
+            item => item.FullPath == b.File.FullPath && item.IsSelectedForDelete);
+        Assert.Single(
+            viewModel.Groups.SelectMany(group => group.Items),
+            item => item.FullPath == c.File.FullPath && item.IsSelectedForDelete);
+    }
+
+    [Fact]
     public async Task CancelStopsActiveScanAndReturnsToStartState()
     {
         var scan = new StubScanApplicationService(async (_, _, token) =>

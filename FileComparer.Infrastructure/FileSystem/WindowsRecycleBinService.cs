@@ -17,22 +17,42 @@ public sealed class WindowsRecycleBinService(
             "Unable to move {Path} to the Windows Recycle Bin");
 
     public async Task<DeleteOutcome> RecycleAsync(
-        string path,
+        FileEntry entry,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(entry);
+        var path = entry.FullPath;
         cancellationToken.ThrowIfCancellationRequested();
         if (!OperatingSystem.IsWindows())
         {
             return Failure(path, "資源回收筒功能只支援 Windows。");
         }
 
-        if (!File.Exists(path))
-        {
-            return Failure(path, "檔案已不存在。");
-        }
-
         try
         {
+            var file = new FileInfo(path);
+            if (!file.Exists)
+            {
+                return Failure(path, "檔案已不存在。");
+            }
+
+            // Reject observable changes between scanning and this operation,
+            // including a link or junction introduced along the path.
+            if (file.Length != entry.Size ||
+                file.LastWriteTimeUtc != entry.LastWriteTimeUtc)
+            {
+                return Failure(path, "檔案在掃描後已變更，請重新掃描再刪除。");
+            }
+
+            for (var current = file.FullName; current is not null;
+                 current = Path.GetDirectoryName(current))
+            {
+                if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                {
+                    return Failure(path, "路徑包含連結項目，請重新掃描再刪除。");
+                }
+            }
+
             await Task.Run(
                     () => Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(
                         path,

@@ -42,7 +42,6 @@ public sealed class DeleteApplicationService(IRecycleBinService recycleBinServic
                 originalGroups);
         }
 
-        var updatedGroups = originalGroups;
         var outcomes = new List<DeleteOutcome>(eligible.Length);
         var isCancelled = false;
 
@@ -58,7 +57,7 @@ public sealed class DeleteApplicationService(IRecycleBinService recycleBinServic
             try
             {
                 outcome = await recycleBinService
-                    .RecycleAsync(item.File.FullPath, cancellationToken)
+                    .RecycleAsync(item.File, cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (OperationCanceledException)
@@ -68,7 +67,6 @@ public sealed class DeleteApplicationService(IRecycleBinService recycleBinServic
             }
 
             outcomes.Add(outcome);
-            updatedGroups = ApplyOutcome(updatedGroups, outcome);
             progress?.Report(new ScanProgress(
                 ScanStage.Deleting,
                 eligible.Length,
@@ -86,7 +84,7 @@ public sealed class DeleteApplicationService(IRecycleBinService recycleBinServic
         return new DeleteBatchResult(
             summary,
             outcomes,
-            updatedGroups,
+            ApplyOutcomes(originalGroups, outcomes),
             isCancelled);
     }
 
@@ -110,17 +108,18 @@ public sealed class DeleteApplicationService(IRecycleBinService recycleBinServic
             .ToArray();
     }
 
-    private static CompareGroup[] ApplyOutcome(
+    private static CompareGroup[] ApplyOutcomes(
         IEnumerable<CompareGroup> groups,
-        DeleteOutcome outcome) =>
-        groups
+        IEnumerable<DeleteOutcome> outcomes)
+    {
+        var byPath = outcomes.ToDictionary(
+            outcome => outcome.Path,
+            StringComparer.OrdinalIgnoreCase);
+        return groups
             .Select(group => group with
             {
                 Items = group.Items
-                    .Select(item => string.Equals(
-                        item.File.FullPath,
-                        outcome.Path,
-                        StringComparison.OrdinalIgnoreCase)
+                    .Select(item => byPath.TryGetValue(item.File.FullPath, out var outcome)
                         ? item with
                         {
                             Status = outcome.IsSuccess
@@ -134,4 +133,5 @@ public sealed class DeleteApplicationService(IRecycleBinService recycleBinServic
                     .ToArray()
             })
             .ToArray();
+    }
 }

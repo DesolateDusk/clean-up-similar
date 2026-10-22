@@ -115,7 +115,7 @@ public interface IFileLauncher
 public interface IRecycleBinService
 {
     Task<DeleteOutcome> RecycleAsync(
-        string path,
+        FileEntry entry,
         CancellationToken cancellationToken);
 }
 
